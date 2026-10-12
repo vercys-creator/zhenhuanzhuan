@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>测测你的人情世故原型，是甄嬛传里的谁</title>
+  <style>
+    :root{
+      --bg:#f7f5fa; --card:#ffffff; --ink:#2d2640; --muted:#7a708c; --line:#ece8f3;
+      --primary:#7c6fae; --primary-light:#f0edfa; --gold:#c9a86c; --gold-light:#faf5ea; --danger:#d88a8a;
+      --radius:18px; --shadow:0 6px 22px rgba(45,38,64,.08);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+    .app{max-width:520px;margin:0 auto;padding:22px 18px 44px;min-height:100vh}
+    .screen{display:none} .screen.active{display:block;animation:fade .35s ease}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    /* 开始页 */
+    .hero{text-align:center;padding:34px 14px 20px}
+    .lantern{width:76px;height:76px;margin:0 auto 16px;border-radius:22px;background:linear-gradient(135deg,var(--primary),#9b8ec9);display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:var(--shadow)}
+    .hero h1{margin:0;font-size:25px;font-weight:800;letter-spacing:1px}
+    .hero p{color:var(--muted);font-size:14px;margin:12px 0 0}
+    .hero .tip{display:inline-block;margin-top:16px;background:var(--gold-light);color:#8c7445;border:1px solid #efe0c6;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600}
+    .hero .code-box{margin-top:22px;background:var(--card);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);border:1px solid var(--line)}
+    .hero .code-label{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .code-input{width:100%;height:50px;border:2px solid var(--line);border-radius:12px;background:var(--bg);text-align:center;font-size:20px;font-weight:700;letter-spacing:12px;color:var(--ink);outline:none;transition:border-color .2s,caret-color .2s}
+    .code-input:focus{border-color:var(--primary)}
+    .code-input::placeholder{font-size:14px;font-weight:400;letter-spacing:2px;color:#bbb}
+    .btn{width:100%;height:50px;border:none;border-radius:14px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform .1s,opacity .2s;box-shadow:0 4px 14px rgba(124,111,174,.28)}
+    .btn:active{transform:scale(.98)}
+    .btn.gold{background:var(--gold);box-shadow:0 4px 14px rgba(201,168,108,.28)}
+    .btn.secondary{background:#fff;color:var(--primary);border:1px solid var(--line);box-shadow:none}
+
+    /* 偏好页 */
+    .pref-head{text-align:center;padding:14px 14px 6px}
+    .pref-head h2{font-size:20px;font-weight:800;margin:0 0 6px}
+    .pref-head p{color:var(--muted);font-size:13px;margin:0}
+    .pref-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;cursor:pointer;border:2px solid transparent;transition:.15s}
+    .pref-card:active{transform:scale(.99)}
+    .pref-card .pc-emoji{width:46px;height:46px;flex:0 0 auto;border-radius:14px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:24px}
+    .pref-card .pc-title{font-size:16px;font-weight:700}
+    .pref-card .pc-desc{font-size:12px;color:var(--muted);margin-top:2px}
+    .pref-card.sel{border-color:var(--primary);background:linear-gradient(180deg,var(--primary-light),#fff)}
+    .pref-hint{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 16px}
+
+    /* 答题页 */
+    .prog-wrap{margin-bottom:18px}
+    .prog-bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden}
+    .prog-fill{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--gold));border-radius:8px;transition:width .35s ease}
+    .prog-text{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
+    .q-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 18px}
+    .q-index{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px}
+    .q-title{font-size:18px;font-weight:700;margin:0 0 18px;line-height:1.5}
+    .opt{display:flex;align-items:flex-start;width:100%;text-align:left;background:var(--primary-light);border:1.5px solid transparent;border-radius:14px;padding:15px 16px;margin-bottom:12px;font-size:15px;color:var(--ink);cursor:pointer;transition:.15s}
+    .opt:active{transform:scale(.99)}
+    .opt:hover{border-color:var(--primary)}
+    .opt.sel{background:#fff;border-color:var(--primary);box-shadow:0 3px 10px rgba(124,111,174,.18)}
+    .opt .o-key{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:var(--primary);color:#fff;font-size:13px;font-weight:700;margin-right:10px;flex:0 0 auto}
+    .nav-row{display:flex;gap:10px;margin-top:16px}
+    .nav-row .btn{flex:1}
+
+    /* 结果页 */
+    .report-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+    .report-head{text-align:center;padding:26px 20px;background:linear-gradient(180deg,var(--primary-light),#fff);position:relative}
+    .report-head::after{content:"";position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+    .match-num{font-size:46px;font-weight:800;color:var(--primary);line-height:1}
+    .match-num span{font-size:18px;font-weight:600}
+    .role-name{margin:10px 0 4px;font-size:25px;font-weight:800}
+    .role-tag{display:inline-block;background:var(--gold-light);color:#8c7445;border:1px solid #efe0c6;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600}
+    .radar-wrap{display:flex;justify-content:center;padding:18px 0 6px}
+    .report-section{padding:18px 20px;border-bottom:1px solid var(--line)}
+    .report-section:last-child{border-bottom:none}
+    .sec-title{font-size:14px;font-weight:800;color:var(--primary);margin:0 0 10px;display:flex;align-items:center;gap:6px}
+    .sec-title::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--gold)}
+    .sec-text{font-size:15px;color:var(--ink);margin:0}
+    .sec-text.quote{font-size:17px;font-weight:600;line-height:1.7;padding:12px 16px;background:var(--gold-light);border-radius:12px;border-left:3px solid var(--gold)}
+    .paint-box{background:var(--primary-light);border-radius:14px;padding:16px}
+    .base-item{margin-bottom:12px} .base-item:last-child{margin-bottom:0}
+    .base-label{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px}
+    .base-text{font-size:14px;color:var(--ink);margin:0}
+    .risk-box{background:#fff8f8;border-radius:14px;padding:16px;border:1px solid #f5e2e2}
+    .risk-item{margin-bottom:12px} .risk-item:last-child{margin-bottom:0}
+    .risk-label{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:4px}
+    .risk-text{font-size:14px;color:var(--ink);margin:0}
+    .quote-list{display:flex;flex-direction:column;gap:10px}
+    .quote-item{background:#fafafa;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;border:1px solid var(--line)}
+    .actions{display:flex;gap:10px;margin-bottom:10px}
+    .actions .btn{flex:1;margin:0}
+    .foot-note{font-size:11px;color:var(--muted);text-align:center;margin-top:12px}
+
+    .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:rgba(45,38,64,.88);color:#fff;padding:10px 20px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:100}
+    .toast.show{opacity:1}
+
+    @media print{
+      body{background:#fff} .app{max-width:none;padding:0}
+      .screen:not(.result-screen),.actions,.foot-note{display:none!important}
+      .result-screen{display:block!important}
+      .report-card{box-shadow:none;border:1px solid #ddd}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- 开始页（不剧透人名） -->
+    <section class="screen start-screen active" id="startScreen">
+      <div class="hero">
+        <div class="lantern">🏮</div>
+        <h1>如果在后宫，你会是谁？</h1>
+        <p>25 道真实会发生的后宫情景，测出你最像<br>甄嬛传里哪一种人际原型，看清你的人情世故底色</p>
+        <div class="tip">约 3 分钟 · 凭直觉选就好</div>
+        <div class="code-box">
+          <div class="code-label">输入访问密码，开启档案</div>
+          <input type="tel" inputmode="numeric" maxlength="4" class="code-input" id="codeInput" placeholder="请输入 4 位密码" autocomplete="off">
+        </div>
+      </div>
+      <button class="btn gold" id="startBtn" style="opacity:.5" disabled>开始测试</button>
+    </section>
+
+    <!-- 角色偏好页 -->
+    <section class="screen pref-screen" id="prefScreen">
+      <div class="pref-head">
+        <h2>先选一个代入方向</h2>
+        <p>这只会决定最后匹配到哪位人物，答题内容完全一样</p>
+      </div>
+      <div class="pref-card" data-pref="female">
+        <div class="pc-emoji">👑</div>
+        <div><div class="pc-title">女性人物优先</div><div class="pc-desc">安陵容 / 华妃 / 甄嬛 / 沈眉庄 / 崔槿汐</div></div>
+      </div>
+      <div class="pref-card" data-pref="male">
+        <div class="pc-emoji">🤴</div>
+        <div><div class="pc-title">男性人物优先</div><div class="pc-desc">温实初 / 年羹尧 / 雍正 / 果郡王 / 苏培盛</div></div>
+      </div>
+      <div class="pref-card" data-pref="all">
+        <div class="pc-emoji">🎭</div>
+        <div><div class="pc-title">不限性别</div><div class="pc-desc">从全部十位人物里，匹配跟你最像的那一个</div></div>
+      </div>
+      <div class="pref-hint">选好后点下方按钮进入测试</div>
+      <button class="btn" id="prefConfirm" disabled style="opacity:.5">进入测试</button>
+    </section>
+
+    <!-- 答题页 -->
+    <section class="screen quiz-screen" id="quizScreen">
+      <div class="prog-wrap">
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-text" id="progText"></div>
+      </div>
+      <div class="q-card" id="qCard"></div>
+      <div class="nav-row">
+        <button class="btn secondary" id="prevBtn">上一题</button>
+        <button class="btn" id="nextBtn">下一题</button>
+      </div>
+    </section>
+
+    <!-- 结果页 -->
+    <section class="screen result-screen" id="resultScreen">
+      <div class="report-card" id="reportCard"></div>
+      <div class="actions">
+        <button class="btn" id="copyBtn">复制文案</button>
+        <button class="btn secondary" id="printBtn">保存/打印</button>
+      </div>
+      <button class="btn secondary" id="retryBtn">再测一次</button>
+      <p class="foot-note">本测试仅用于趣味性自我探索，不构成专业心理测评。</p>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    /* ===== 八维定义（顺序固定，用于理想向量与计分） ===== */
+    const dims = [
+      {key:'边界感', desc:'敢不敢让人进你的世界'},
+      {key:'拒绝力', desc:'能不能干净说“不”'},
+      {key:'共情', desc:'接不接得住别人情绪'},
+      {key:'识人', desc:'能不能看懂对方在想什么'},
+      {key:'博弈', desc:'会不会在关系里留一手'},
+      {key:'表达', desc:'能不能把不舒服说清楚'},
+      {key:'能量管理', desc:'会不会被别人消耗'},
+      {key:'钝感', desc:'被冒犯后能不能翻篇'}
+    ];
+    const DIM_KEYS = dims.map(d=>d.key);
+
+    /* ===== 题库：25 道场景题（后宫+朝堂穿插） =====
+       每项 opt = [字母, 文字, 维度, 是否反向]
+       反向(rev=true)表示选该项意味着该维度偏低，计 -1 分；
+       界面只显示“字母+文字”，括号里的维度不暴露给用户。 */
+    const questions = [
+      {q:`你刚入宫位分不高，同宫的小主总使唤你的丫鬟跑腿，你？`,
+       opts:[['A','直接跟她说“我的丫鬟也有事要做”','拒绝力',false],
+             ['B','让丫鬟去，但心里记下这笔','博弈',false],
+             ['C','算了，丫鬟跑跑腿也没什么','共情',false],
+             ['D','慢慢少和她来往，保持距离','边界感',false]]},
+      {q:`你刚打完胜仗回京，有御史上折子弹劾你“入京时百官跪迎，你端坐马上毫无谦意”，皇上把折子甩给你看，你？`,
+       opts:[['A','直接上书自辩，不卑不亢','表达',false],
+             ['B','主动交出部分兵权示好','博弈',false],
+             ['C','反省是不是我班师回朝时太高调了','边界感',false],
+             ['D','先不回应，观察皇上到底信谁','识人',false]]},
+      {q:`家宴上有人当众拿你的出身/位分开玩笑，你？`,
+       opts:[['A','笑着把话顶回去','表达',false],
+             ['B','表面没反应，回宫越想越气','钝感',true],
+             ['C','先看她是无心还是有人指使','识人',false],
+             ['D','顺着台阶下，心里记一笔','博弈',false]]},
+      {q:`你刚从军营回来赴宴，有个喝过两次酒的官员，酒过三巡拉着你问“听说西大营最近换了防区？”，你？`,
+       opts:[['A','直接说“军中机密，喝多了也不能说”','拒绝力',false],
+             ['B','含糊说“不太清楚，我就是个跑腿的”','边界感',false],
+             ['C','觉得他把我当兄弟，就聊了两句','共情',false],
+             ['D','反问“你问这个做什么？要上折子？”','表达',false]]},
+      {q:`不熟的嫔妃突然跟你套近乎、问你皇上昨夜说了什么，你？`,
+       opts:[['A','含糊带过，转话题','边界感',false],
+             ['B','直接说“皇上的话我不敢乱传”','拒绝力',false],
+             ['C','觉得她把我当自己人，就说了','共情',false],
+             ['D','反问“妹妹怎么对这个这么上心”','表达',false]]},
+      {q:`你一起长大的兄弟被下了大狱，说他收受贿赂，他托人递话求你上朝时替他说句公道话，你？`,
+       opts:[['A','直接出列替他辩白','表达',false],
+             ['B','上折请病假，不去上朝','钝感',true],
+             ['C','私下打听了一圈，觉得他可能真有问题','识人',false],
+             ['D','找个折中说法，既保他也不把自己搭进去','博弈',false]]},
+      {q:`有个嫔妃天天来你宫里倒苦水、说自己不得宠，你？`,
+       opts:[['A','认真听，但自己情绪也被带跑','能量管理',true],
+             ['B','慢慢减少她来的次数','能量管理',false],
+             ['C','想她是不是只在需要时才找我','识人',false],
+             ['D','先接住她的委屈，再帮她想办法','共情',false]]},
+      {q:`你刚打了大胜仗，皇上当着满朝文武夸你“劳苦功高”，转头下旨升你为御前大臣、赏座大宅子——明眼人都知道这是收你兵权、把你留在眼皮底下，你？`,
+       opts:[['A','磕头谢恩接旨，心里有数','博弈',false],
+             ['B','直接上折说“臣戎马半生，不堪御前文职”','拒绝力',false],
+             ['C','觉得皇上这是真把当心腹了','共情',false],
+             ['D','先接旨，看接下来还有什么动静','识人',false]]},
+      {q:`你晋封了，发现有老嫔妃态度变微妙，你？`,
+       opts:[['A','能感觉到，但不影响我做事','钝感',false],
+             ['B','琢磨她是不是嫉妒我','识人',false],
+             ['C','还是照常对她，不卑不亢','边界感',false],
+             ['D','干脆少来往','博弈',false]]},
+      {q:`某皇子的人深夜登门，带了一坛好酒和一张银票，说“我们王爷说了，朝里的事，还望大人多多关照”，你？`,
+       opts:[['A','银票退回去，酒也没留，直接送客','拒绝力',false],
+             ['B','东西收了但装糊涂，不接话','钝感',true],
+             ['C','想他一个皇子为什么找我，背后是谁的意思','识人',false],
+             ['D','收下，嘴上应着，心里留个心眼','边界感',false]]},
+      {q:`有个低位分的嫔妃突然对你特别好、送你亲手做的点心/暖炉，你？`,
+       opts:[['A','一眼看出她在放长线','识人',false],
+             ['B','先受着，等她提要求再应对','博弈',false],
+             ['C','觉得她真心待我','共情',false],
+             ['D','赶紧回礼，不欠人情','边界感',false]]},
+      {q:`跟你从龙入关、一起出生入死的老兄弟，这次带三千人中了埋伏折了一半，按军法当斩，他跪在你帐外一夜，你？`,
+       opts:[['A','按军法处置，挥泪斩了','表达',false],
+             ['B','上折替他求情，说胜败乃兵家常事','共情',false],
+             ['C','心里像被刀割，但还得撑着处理后续','能量管理',true],
+             ['D','让他戴罪立功，带罪兵打头阵','博弈',false]]},
+      {q:`御花园里，有嫔妃笑着拿你的穿戴/出身打趣，你当场没接上话，回宫的马车上才想明白该怎么回，你？`,
+       opts:[['A','翻篇，回宫就不想了','钝感',false],
+             ['B','一路反复想，越想越气','能量管理',true],
+             ['C','下次知道怎么接这种话了','识人',false],
+             ['D','找个场合把面子找回来','表达',false]]},
+      {q:`你最信任、从你未发迹就跟着的师爷，你无意间发现他的书信在跟对面军营通气——这些年你的布阵、兵力部署，他可能一直在递消息，你？`,
+       opts:[['A','直接摊牌，问他为什么','表达',false],
+             ['B','假装不知道，慢慢找个由头打发他走','边界感',false],
+             ['C','难过，想是不是我哪亏待了他','共情',false],
+             ['D','不动声色，将计就计给他假消息','识人',false]]},
+      {q:`祺嫔拉你一起，说要在皇上面前参华妃宫里苛待宫人，你不想掺和这趟浑水，你？`,
+       opts:[['A','直接说“这件事我不掺和”','拒绝力',false],
+             ['B','不去，但也不告诉被参的那边','共情',false],
+             ['C','找折中办法，两边都不得罪','博弈',false],
+             ['D','去了，但事后反复想会不会被两边记恨','钝感',true]]},
+      {q:`御花园单独召见你，聊了几句家常，皇上忽然问：“你在外头听人说，哪位皇子贤能啊？”旁边连个伺候的人都没有，你？`,
+       opts:[['A','直接说“这是皇上的家事，臣不敢妄议”','拒绝力',false],
+             ['B','把两边皇子都夸一遍，不站队','博弈',false],
+             ['C','实话实说你看好谁','表达',false],
+             ['D','先看皇上的语气和眼神再答','识人',false]]},
+      {q:`接连侍寝、应付各宫来往、协理六宫的事压过来，你觉得这宫里的日子越来越喘不过气，你？`,
+       opts:[['A','主动称病、减少应酬，不再硬撑','能量管理',false],
+             ['B','先想想是不是我自己哪里没做好','共情',false],
+             ['C','表面维持，心里不再跟谁交心','边界感',false],
+             ['D','跟皇上或最亲的姐妹说清楚我的处境','表达',false]]},
+      {q:`你正在奏事，有个跟你不对付的官员突然出列，当众翻出你三年前一件小事，添油加醋说你“当年就有不臣之心”，满朝都看着你，你？`,
+       opts:[['A','当场把话顶回去','表达',false],
+             ['B','表面面无表情，回家一路憋着，整夜失眠','能量管理',true],
+             ['C','先看他是谁的人指使的','识人',false],
+             ['D','不接招，回头再收拾他','博弈',false]]},
+      {q:`深夜，一个嫔妃拉着你的手，说“姐姐，这话我只告诉你一个人”，然后开始说别人的事，你？`,
+       opts:[['A','听完就忘，不往心里去','钝感',false],
+             ['B','会想她转头会不会也跟别人说我','识人',false],
+             ['C','感动，觉得她真把我当自己人','共情',false],
+             ['D','表面应着，心里有保留','边界感',false]]},
+      {q:`一个你不熟的官员，托人把你约到酒楼雅间，桌上放着一张五千两的银票，说有个案子要过你手，“还望大人高抬贵手”，你？`,
+       opts:[['A','银票推回去，当场走人','拒绝力',false],
+             ['B','银票收了，案子该怎么办还怎么办','博弈',false],
+             ['C','觉得他是真把我当自己人了','共情',false],
+             ['D','收下，回头把这事记下来——这是他的把柄','识人',false]]},
+      {q:`有人在太后/皇上面前阴阳怪气针对你，你？`,
+       opts:[['A','私下问她什么意思','表达',false],
+             ['B','装没听见，不接招','钝感',false],
+             ['C','反省我是不是哪里得罪她了','共情',false],
+             ['D','不动声色，观察她下一步','识人',false]]},
+      {q:`宫里出了事（有人小产/摔了东西被牵连），众人都疑心是你身边的人做的，你被误会了，但当众解释越描越黑，你？`,
+       opts:[['A','懒得解释，懂我的人自然懂','钝感',false],
+             ['B','一定找皇上/太后解释清楚，不能背这个锅','表达',false],
+             ['C','委屈，但还是当众解释了','共情',false],
+             ['D','不解释，但心里记下谁误会了我','博弈',false]]},
+      {q:`你偶然听到自己交好的姐妹，跟另一个嫔妃说“她那人啊……”，说的其实是你，你？`,
+       opts:[['A','直接去问她什么意思','表达',false],
+             ['B','假装不知道，慢慢疏远','边界感',false],
+             ['C','难过，想是不是我哪里对不住她','共情',false],
+             ['D','不动声色，以后留个心眼','识人',false]]},
+      {q:`有人跟你套近乎、问你皇上宠不宠你、跟你说了什么，你？`,
+       opts:[['A','直接说“后宫的事不方便说”','拒绝力',false],
+             ['B','含糊应付过去','边界感',false],
+             ['C','觉得她热情，就说了','共情',false],
+             ['D','反问她一些问题反过来','博弈',false]]},
+      {q:`有嫔妃当众提了一句你最不愿人提的事（出身/过去/家里），你当场脸色就变了、话也冲了，回宫才反应过来自己失态了，你？`,
+       opts:[['A','当场忍住，回宫再想怎么处理','能量管理',false],
+             ['B','当场就把话顶回去了','表达',false],
+             ['C','事后反复想，一整晚睡不着','钝感',true],
+             ['D','下次先观察，不立刻反应','识人',false]]}
+    ];
+
+    /* 自动统计每维正向题数（归一化分母） */
+    const maxMap = {}; DIM_KEYS.forEach(k=>maxMap[k]=0);
+    questions.forEach(q=>q.opts.forEach(o=>{ if(!o[3]) maxMap[o[2]]++; }));
+
+    /* ===== 角色设定：女性池 ===== */
+    const femalePool = {
+      安陵容: {tag:'敏感缺爱·棋子型', gender:'女', tone:'你不是不努力，是太怕被丢下。',
+        voice:'“我这样的人，能做的只有更小心一些。”',
+        risk:'最容易因为过度敏感而被人当棋子，或被一句否定打沉。你总在察言观色，反而容易把主动权交给别人。',
+        advice:'你已经很会照顾别人了，接下来试着把这份细心分一点给自己。',
+        quotes:['“我这一路，不过是想被人好好看见。”','“我不是多想争，只是怕一松手就什么也没有了。”','“敏感是我的软肋，但也是我能读懂人心的来处。”'],
+        ideal:[25,20,90,55,30,40,30,35]},
+      华妃: {tag:'骄傲直球·火焰型', gender:'女', tone:'你不是脾气差，是太不愿意输。',
+        voice:'“本宫若要燃，便要燃得满城皆知。”',
+        risk:'最容易输在“把骄傲当盔甲”。你直来直去很痛快，但也容易被人一点就着、被当枪使。',
+        advice:'你的火焰很耀眼，但下次燃起来之前，先问一句“值不值得”。',
+        quotes:['“本宫若要燃，便要燃得满城皆知。”','“我从不屑于藏着掖着，喜欢讨厌都写在脸上。”','“骄傲是我的铠甲，也是我最软的软肋。”'],
+        ideal:[65,85,35,50,40,90,55,35]},
+      甄嬛: {tag:'聪明周旋·成长型', gender:'女', tone:'你不是圆滑，是太早学会了看清。',
+        voice:'“在这人情世故里，懂得进退比懂得争更重要。”',
+        risk:'最容易在“太会周旋”里把自己绕进去。你看得懂规则，却可能在规则里忘了自己真正想要什么。',
+        advice:'你可以继续聪明，但别忘了在每次进退之间，给自己留一个“我想要”的选项。',
+        quotes:['“在这人情世故里，懂得进退比懂得争更重要。”','“我可以温柔，也可以锋利，全看对方值不值得。”','“真正的聪明，是看透之后还选择留一线。”'],
+        ideal:[65,60,80,85,75,80,65,60]},
+      沈眉庄: {tag:'清醒独立·风骨型', gender:'女', tone:'你不是冷淡，是早把真心设了门槛。',
+        voice:'“我不依附谁，也不讨好谁，我的风骨就是我。”',
+        risk:'最容易因为“不屑解释”而被误解。你的边界感是保护，但也可能把真心也挡在外面。',
+        advice:'风骨很美，但偶尔低一次头、说一句软话，不是妥协，是给关系一条活路。',
+        quotes:['“我不依附谁，也不讨好谁，我的风骨就是我。”','“有些热闹，本宫从来不想凑。”','“清醒的代价是孤独，但孤独比糊涂踏实。”'],
+        ideal:[90,85,55,75,55,70,80,85]},
+      崔槿汐: {tag:'通透老灵魂·定盘星', gender:'女', tone:'你不是沉默，是把话都留在了该留的地方。',
+        voice:'“看透不说透，是成全别人，也是保护自己。”',
+        risk:'最容易因为太稳而被当成“不需要被照顾”。你看透太多，反而没人问你累不累。',
+        advice:'你可以是别人的定盘星，但也允许自己偶尔摇晃一下，让身边人有照顾你的机会。',
+        quotes:['“看透不说透，是成全别人，也是保护自己。”','“该进时进一步，该退时让一寸，关系才能长久。”','“我不急着赢，因为时间会把该留的人留下。”'],
+        ideal:[85,75,70,95,85,60,90,90]}
+    };
+
+    /* ===== 角色设定：男性池（方案A，剖面复用对应女性型） ===== */
+    const malePool = {
+      温实初: {tag:'敏感缺爱·棋子型', gender:'男', tone:'你不是不够好，是太怕失去身边那一点暖。',
+        voice:'“我这一生，只求护得想护之人周全，哪怕自己粉身碎骨。”',
+        risk:'最容易因为太重情而被人拿捏。你习惯了默默付出，却很少问“对方值不值得”，容易成为别人棋盘上最稳的那颗子。',
+        advice:'你已经很会体贴别人了，试着把这份体贴先给自己留三分。',
+        quotes:['“有些话，我放在心里一辈子，也说不出口。”','“我不敢奢求太多，只盼着她好好的。”','“深情不是软肋，只是我选了温柔地活。”'],
+        ideal:[25,20,90,55,30,40,30,35]},
+      年羹尧: {tag:'骄傲直球·火焰型', gender:'男', tone:'你不是跋扈，是太信自己这一身本事。',
+        voice:'“本将军的功劳，是把刀架在敌人脖子上挣来的，不是求来的。”',
+        risk:'最容易输在“把功劳当底气、把直率当坦荡”。你锋芒太露，容易被一句捧杀点着，也容易被当成该削的刺。',
+        advice:'你的锋利很痛快，但下次出鞘前，先看清座上之人想不想让你出鞘。',
+        quotes:['“我年羹尧，从不屑绕弯子。”','“功高如何？我本就配得上这份狂。”','“烈火焚身不可怕，怕的是烧错了人。”'],
+        ideal:[65,85,35,50,40,90,55,35]},
+      雍正: {tag:'聪明周旋·成长型', gender:'男', tone:'你不是冷，是太早学会把真心放进暗处。',
+        voice:'“朕坐在这位置上，每一步都要算到十步之后。”',
+        risk:'最容易在“太会权衡”里把人也当成棋子。你看得透局，却要小心别把自己活成没有温度的局。',
+        advice:'你可以继续周全，但偶尔也允许自己不计算一回，只为“想做”。',
+        quotes:['“帝王之心，本就该藏于九重深处。”','“我给的恩，也能收回；我留的退路，从不示人。”','“看透之后还能信人，才是真本事。”'],
+        ideal:[65,60,80,85,75,80,65,60]},
+      果郡王: {tag:'清醒独立·风骨型', gender:'男', tone:'你不是疏离，是早把功名看淡，只守自己的节拍。',
+        voice:'“我不争那把椅子，也不依附任何人——这一生，只做我自己。”',
+        risk:'最容易因为“不屑争”而被当成软柿子，或因为太有风骨而孤。你守得住自己，却也可能把真心也关在门外。',
+        advice:'风骨很珍贵，但偶尔伸出手、说一句“我在”，不是低头，是让在意的人靠近你。',
+        quotes:['“名利如浮云，我自清风明月。”','“我不站队，也不被人站队。”','“清醒的孤独，好过糊涂的热闹。”'],
+        ideal:[90,85,55,75,55,70,80,85]},
+      苏培盛: {tag:'通透老灵魂·定盘星', gender:'男', tone:'你不是圆滑，是把世道看透了还愿意周全。',
+        voice:'“奴才伺候过的人多了，最懂何时该进、何时该退。”',
+        risk:'最容易因为太稳而被当成“谁都能用”。你看透一切，却没人问你这位老熟人累不累。',
+        advice:'你可以是全场的定盘星，但也允许自己偶尔偏一偏，让旁人有机会接住你。',
+        quotes:['“看透不说透，是成全，也是自保。”','“该进则进，该退则退，方能长久。”','“我不抢风头，但风来了，我站得最稳。”'],
+        ideal:[85,75,70,95,85,60,90,90]}
+    };
+
+    function poolOf(pref){
+      if(pref==='female') return femalePool;
+      if(pref==='male') return malePool;
+      return Object.assign({},femalePool,malePool);
+    }
+
+    /* ===== 文案模板（按维度，男女通用） ===== */
+    const portraits = {
+      边界感:'你处理不舒服关系的方式，是先筑一道门槛。不是不近人情，而是你心里门儿清：谁可以进来、谁只能站在门口。你的{dim}有{score}分，这让你很少被人随意越界，只是偶尔会让别人觉得你“有点难靠近”。',
+      拒绝力:'你最厉害的地方，是能把“不”说得干脆但不刺耳。{score}分的{dim}不是冷漠，是你早就想好了自己的底线，所以别人越界时，你不会先委屈自己再解释。',
+      共情:'你天然能接住别人的情绪，{score}分的{dim}让你在关系里像一块软垫。但你也容易因为接太多、消化太慢，把自己弄得有点累。',
+      识人:'你眼睛很毒，{score}分的{dim}让你很快就能看出谁在演、谁是真心。所以你不太会被人设骗，只是有时候看太透，反而不知道该不该拆穿。',
+      博弈:'你不是爱算计，是{score}分的{dim}让你觉得：关系里总得留一手。你会默默评估局势，选择最合适的时机进退，很少把自己逼到没退路。',
+      表达:'你有一件事特别难得：{score}分的{dim}让你能把不舒服说清楚，而不是压成内伤。你习惯把话说开，也期待对方能听懂你的弦外之音。',
+      能量管理:'你最懂的其实是保护自己，{score}分的{dim}让你在耗电的关系里懂得撤退。你不会为了面子无限续航，该沉默就沉默，该走开就走开。',
+      钝感:'你有一种很珍贵的能力：{score}分的{dim}让你被冒犯后还能翻篇。不是你不敏感，是你选择不把精力分给不值得的人和事。'
+    };
+    const baseDescriptions = {
+      边界感:'{score}分的边界感，让你在关系里有一张“准入名单”。你清楚谁的靠近是滋养，谁是消耗。',
+      拒绝力:'{score}分的拒绝力，是你最体面的护城河。别人还在想理由时，你已经把门关上了。',
+      共情:'{score}分的共情，让你能接住别人的情绪，但别忘了先接住自己。',
+      识人:'{score}分的识人，让你比别人早一点看懂局。信任对你而言，从来不是一拍脑袋的事。',
+      博弈:'{score}分的博弈感，说明你懂关系不是非黑即白，而是留有余地的棋局。',
+      表达:'{score}分的表达，让你能把委屈和不舒服翻译成别人能听懂的话，这本身就是一种稀缺能力。',
+      能量管理:'{score}分的能量管理，说明你知道什么时候该退场。关系的质量，不靠硬撑维持。',
+      钝感:'{score}分的钝感，不是迟钝，是选择性失忆。你把记性留给值得的人和事。'
+    };
+    const blinds = {
+      边界感:'你的盲点可能是——对别人太好、太不设防。你容易把“接纳”当成“亲近”，结果自己的空间被慢慢蚕食。{score}分的{dim}提醒你：不舒服不是敏感，是信号，先听一听再决定要不要退让。',
+      拒绝力:'你不太会直接说“不”，常常绕一大圈暗示，结果对方没听懂，你自己更憋屈。{score}分的{dim}不是低，但拒绝不需要理由清单，一句“这次不行”就够了，越简短越体面。',
+      共情:'你有时候容易把“理解别人”放在“照顾自己”前面，{score}分的{dim}不是低，是你太习惯做情绪海绵。共情之前先问一句——这件事需要我负责吗？',
+      识人:'你容易把人想简单，{score}分的{dim}让你有时后知后觉。不是要你疑神疑鬼，而是慢一点交底、慢一点表态，给自己留观察期。',
+      博弈:'你在关系里常常All in，{score}分的{dim}提醒你：真诚和留一手不矛盾。重要决定先放一晚，别让当下的感动替你做选择。',
+      表达:'你不习惯把不舒服摊开说，{score}分的{dim}让你习惯自己消化。不必立刻 confront，但可以先用一句“这件事我需要再想想”给自己争取空间。',
+      能量管理:'你容易被关系拖着走，{score}分的{dim}说明你还不太会主动断电。不是每次社交都要满分出席，学会“在场但不接入”。',
+      钝感:'你其实什么都记得，{score}分的{dim}只是你的保护色。翻篇不是假装没事，是允许自己承认“那确实让我不舒服”，然后才真正放下。'
+    };
+
+    /* ===== 状态 ===== */
+    let cur=0, currentPref=null, displayOrder=[];
+    const answers={}; // 以题在 questions 中的原始索引为 key
+
+    /* ===== 流程控制 ===== */
+    function show(id){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function shuffle(arr){
+      const a=arr.slice();
+      for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+      return a;
+    }
+
+    const codeInput=document.getElementById('codeInput');
+    const startBtn=document.getElementById('startBtn');
+    codeInput.addEventListener('input',()=>{
+      const ok=codeInput.value.trim()==='2208';
+      startBtn.disabled=!ok; startBtn.style.opacity=ok?'1':'.5';
+      if(ok) startBtn.textContent='开始测试';
+    });
+    startBtn.addEventListener('click',()=>{
+      if(codeInput.value.trim()!=='2208'){ toast('密码不对哦，再检查一下'); return; }
+      show('prefScreen');
+    });
+    document.querySelectorAll('.pref-card').forEach(card=>{
+      card.addEventListener('click',()=>{
+        document.querySelectorAll('.pref-card').forEach(c=>c.classList.remove('sel'));
+        card.classList.add('sel');
+        currentPref=card.dataset.pref;
+        const btn=document.getElementById('prefConfirm');
+        btn.disabled=false; btn.style.opacity='1';
+      });
+    });
+    document.getElementById('prefConfirm').addEventListener('click',()=>{
+      if(!currentPref){toast('请先选一个代入方向');return;}
+      startQuiz();
+    });
+
+    function startQuiz(){
+      cur=0;
+      for(const k in answers) delete answers[k];
+      displayOrder=shuffle(questions.map((_,i)=>i));
+      show('quizScreen'); renderQ();
+    }
+
+    function renderQ(){
+      const qi=displayOrder[cur];
+      const q=questions[qi];
+      const total=questions.length;
+      document.getElementById('progFill').style.width=((cur)/total*100)+'%';
+      document.getElementById('progText').textContent='第 '+(cur+1)+' 题 / 共 '+total+' 题';
+      const sel=answers[qi];
+      let html=`<div class="q-index">第 ${cur+1} 题</div><div class="q-title">${q.q}</div>`;
+      q.opts.forEach((o,i)=>{
+        const s=(sel===i)?' sel':'';
+        html+=`<div class="opt${s}" data-i="${i}"><span class="o-key">${o[0]}</span><span>${o[1]}</span></div>`;
+      });
+      const card=document.getElementById('qCard'); card.innerHTML=html;
+      card.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+        answers[qi]=+el.dataset.i;
+        card.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+        el.classList.add('sel');
+        setTimeout(()=>{ if(cur<total-1){cur++;renderQ();} else finish(); },180);
+      }));
+      document.getElementById('prevBtn').style.visibility=cur===0?'hidden':'visible';
+      document.getElementById('nextBtn').textContent=cur===total-1?'看结果':'下一题';
+    }
+
+    function computeScores(){
+      const raw={}; DIM_KEYS.forEach(k=>raw[k]=0);
+      questions.forEach((q,i)=>{
+        const ans=answers[i];
+        if(ans==null) return;
+        const o=q.opts[ans];
+        if(o[3]) raw[o[2]]--; else raw[o[2]]++;
+      });
+      const sc={};
+      DIM_KEYS.forEach(k=>{
+        const v=Math.max(0,Math.min(maxMap[k],raw[k]));
+        sc[k]=Math.round(v/maxMap[k]*100);
+      });
+      return sc;
+    }
+    function dist(a,b){ let s=0; for(let i=0;i<a.length;i++){const d=a[i]-b[i]; s+=d*d;} return Math.sqrt(s/a.length); }
+
+    function matchRole(scores){
+      const pool=poolOf(currentPref);
+      const v=DIM_KEYS.map(k=>scores[k]);
+      let best=null,bestD=1e9;
+      for(const name in pool){
+        const d=dist(v,pool[name].ideal);
+        if(d<bestD){bestD=d;best=name;}
+      }
+      return {name:best, pct:Math.max(60,Math.round(100-bestD)), pool};
+    }
+
+    function radarSVG(scores){
+      const cx=150,cy=150,R=105,N=dims.length;
+      const ang=i=>(-90+i*360/N)*Math.PI/180;
+      let grid='',poly='';
+      [0.25,0.5,0.75,1].forEach(f=>{
+        let pts=''; for(let i=0;i<N;i++){const r=R*f;pts+=`${(cx+r*Math.cos(ang(i))).toFixed(1)},${(cy+r*Math.sin(ang(i))).toFixed(1)} `;}
+        grid+=`<polygon points="${pts}" fill="none" stroke="#ece8f3" stroke-width="1"/>`;
+      });
+      let axes='';
+      dims.forEach((d,i)=>{
+        const x=cx+R*Math.cos(ang(i)),y=cy+R*Math.sin(ang(i));
+        axes+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ece8f3"/>`;
+        const lx=cx+(R+18)*Math.cos(ang(i)),ly=cy+(R+18)*Math.sin(ang(i));
+        axes+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" fill="#7a708c" text-anchor="middle" dominant-baseline="middle">${d.key}</text>`;
+      });
+      let dpts='';
+      dims.forEach((d,i)=>{const r=R*(scores[d.key]/100);dpts+=`${(cx+r*Math.cos(ang(i))).toFixed(1)},${(cy+r*Math.sin(ang(i))).toFixed(1)} `;});
+      poly=`<polygon points="${dpts}" fill="rgba(124,111,174,.30)" stroke="#7c6fae" stroke-width="2"/>`;
+      dims.forEach((d,i)=>{const r=R*(scores[d.key]/100);poly+=`<circle cx="${(cx+r*Math.cos(ang(i))).toFixed(1)}" cy="${(cy+r*Math.sin(ang(i))).toFixed(1)}" r="3" fill="#7c6fae"/>`;});
+      return `<svg viewBox="0 0 300 300" width="300" height="300" xmlns="http://www.w3.org/2000/svg">${grid}${axes}${poly}</svg>`;
+    }
+
+    function fmt(t,dim,score){return t.replace(/\{dim\}/g,dim).replace(/\{score\}/g,score);}
+
+    function finish(){
+      const scores=computeScores();
+      const m=matchRole(scores);
+      const info=m.pool[m.name];
+      const sorted=DIM_KEYS.map(k=>({key:k,score:scores[k]})).sort((a,b)=>b.score-a.score);
+      const dominant=sorted[0].key, second=sorted[1].key, third=sorted[2].key, weak=sorted[sorted.length-1].key;
+
+      const html=`<div class="report-head">
+          <div class="match-num">${m.pct}<span>%</span></div>
+          <div class="role-name">${m.name}</div>
+          <div class="role-tag">${info.tag}</div>
+        </div>
+        <div class="report-section"><div class="radar-wrap">${radarSVG(scores)}</div></div>
+        <div class="report-section">
+          <div class="sec-title">1. 你的人际原型</div>
+          <p class="sec-text">你像 <b>${m.name}</b>（${info.tag}），匹配度 ${m.pct}%。${info.tone}</p>
+        </div>
+        <div class="report-section">
+          <div class="sec-title">2. 你的人际心声</div>
+          <p class="sec-text quote">${info.voice}</p>
+        </div>
+        <div class="report-section">
+          <div class="sec-title">3. 你的人际自画像</div>
+          <p class="sec-text">${fmt(portraits[dominant],dominant,scores[dominant])}</p>
+        </div>
+        <div class="report-section">
+          <div class="sec-title">4. 你的人际底色</div>
+          <div class="paint-box">
+            <div class="base-item"><div class="base-label">第一底色 · ${dominant}（${scores[dominant]}分）</div><p class="base-text">${fmt(baseDescriptions[dominant],dominant,scores[dominant])}</p></div>
+            <div class="base-item"><div class="base-label">隐藏天赋 · ${second}（${scores[second]}分）</div><p class="base-text">${fmt(baseDescriptions[second],second,scores[second])}</p></div>
+            <div class="base-item"><div class="base-label">长期优势 · ${third}（${scores[third]}分）</div><p class="base-text">${fmt(baseDescriptions[third],third,scores[third])}</p></div>
+          </div>
+        </div>
+        <div class="report-section">
+          <div class="sec-title">5. 你的人际盲点与建议</div>
+          <div class="risk-box">
+            <div class="risk-item"><div class="risk-label">可能的盲点（${weak} ${scores[weak]}分）</div><p class="risk-text">${fmt(blinds[weak],weak,scores[weak])}</p></div>
+            <div class="risk-item"><div class="risk-label">风险提醒</div><p class="risk-text">${info.risk}</p></div>
+            <div class="risk-item"><div class="risk-label">给你的一句话建议</div><p class="risk-text">${info.advice}</p></div>
+          </div>
+        </div>
+        <div class="report-section">
+          <div class="sec-title">6. 你的三句人际台词</div>
+          <div class="quote-list">${info.quotes.map(q=>`<div class="quote-item">${q}</div>`).join('')}</div>
+        </div>`;
+      document.getElementById('reportCard').innerHTML=html;
+      document.getElementById('progFill').style.width='100%';
+      show('resultScreen');
+    }
+
+    function copyReport(){
+      const card=document.getElementById('reportCard');
+      const texts=[];
+      const head=card.querySelector('.match-num');
+      const name=card.querySelector('.role-name');
+      const tag=card.querySelector('.role-tag');
+      if(head&&name) texts.push(`我的人际原型：${name.textContent}（${tag.textContent}）匹配度 ${head.textContent.replace(/[^0-9]/g,'')}%`);
+      card.querySelectorAll('.report-section').forEach(sec=>{
+        const title=sec.querySelector('.sec-title')?.textContent||'';
+        if(!title) return;
+        const body=Array.from(sec.querySelectorAll('.sec-text, .base-item, .risk-item, .quote-item')).map(el=>el.textContent.trim()).filter(Boolean).join('\n');
+        if(body) texts.push(`\n${title}\n${body}`);
+      });
+      const txt=texts.join('\n');
+      const copy=()=>{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('报告文案已复制'),()=>legacy(txt));} else legacy(txt); };
+      copy();
+    }
+    function legacy(txt){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,999999);try{document.execCommand('copy');toast('报告文案已复制');}catch(e){toast('复制失败，请手动截图');}document.body.removeChild(ta);}
+    function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+    document.getElementById('prevBtn').addEventListener('click',()=>{if(cur>0){cur--;renderQ();}});
+    document.getElementById('nextBtn').addEventListener('click',()=>{
+      const qi=displayOrder[cur];
+      if(answers[qi]==null){toast('先选一个最符合你的');return;}
+      if(cur<questions.length-1){cur++;renderQ();} else finish();
+    });
+    document.getElementById('copyBtn').addEventListener('click',copyReport);
+    document.getElementById('printBtn').addEventListener('click',()=>window.print());
+    document.getElementById('retryBtn').addEventListener('click',()=>{ currentPref=null; document.querySelectorAll('.pref-card').forEach(c=>c.classList.remove('sel')); const b=document.getElementById('prefConfirm'); b.disabled=true; b.style.opacity='.5'; show('startScreen'); });
+  </script>
+</body>
+</html>
